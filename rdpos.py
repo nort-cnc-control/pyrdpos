@@ -17,7 +17,7 @@ class RDPoSConnection(object):
                 b = self.ser_port.read(1)
             except Exception as e:
                 print("Exception", e)
-                continue
+                break
 
             #if random.random() < 0.02:
             #    continue
@@ -27,28 +27,27 @@ class RDPoSConnection(object):
             if b != serial_datagram.END:
                 continue
             print()
-            print("RCVD DGRAM, %i" % len(data))
+            #print("RCVD DGRAM, %i" % len(data))
             try:
                 dgram = serial_datagram.decode(data)
                 evq.put(("dgram_recv", dgram))
             except:
-                print("data loss")
                 pass
             data = bytes()
 
     def __rdp_connected(self, conn):
-        print("CONNECTED")
+        #print("CONNECTED")
         self.__connected.set()
         self.__closed.clear()
 
     def __rdp_closed(self, conn):
-        print("CLOSED")
+        #print("CLOSED")
         self.__connected.clear()
         self.__closed.set()
 
     def __dgram_send(self, conn, data):
         enc = serial_datagram.encode(data)
-        print("SEND", end=" ")
+        #print("SEND", end=" ")
         for b in enc:
             print("%02X" % b, end=" ")
         print()
@@ -86,7 +85,8 @@ class RDPoSConnection(object):
             elif mtype == "reset":
                 rdpc.reset()
             if not res:
-                print("Data error")
+                pass
+                #print("Data error")
 
     def __init__(self, ser_port):
         self.evq = multiprocessing.Queue()
