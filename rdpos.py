@@ -9,12 +9,14 @@ import time
 import random
 
 class RDPoSConnection(object):
+
     def run_read_serial(self, evq):
         data = bytes()
-        while not self.__finish.is_set():
+        while True:
             try:
                 b = self.ser_port.read(1)
             except Exception as e:
+                print("Exception", e)
                 continue
 
             #if random.random() < 0.02:
@@ -67,11 +69,8 @@ class RDPoSConnection(object):
         rdpc.set_connected_cb(self.__rdp_connected)
         rdpc.set_closed_cb(self.__rdp_closed)
 
-        while not self.__finish.is_set():
-            try:
-                msg = evq.get(timeout=1)
-            except:
-                continue
+        while True:
+            msg = evq.get()
             mtype = msg[0]
             data = msg[1]
             if mtype == "connect":
@@ -98,16 +97,15 @@ class RDPoSConnection(object):
         self.__closed = multiprocessing.Event()
         self.__rcvd = multiprocessing.Queue()
 
-        self.__finish = multiprocessing.Event()
-
         self.__listener = multiprocessing.Process(target=self.run_read_serial, args=(self.evq,))
         self.__cycle = multiprocessing.Process(target=self.run_cycle, args=(self.evq,))
         self.__listener.start()
         self.__cycle.start()
 
     def __dofinish(self):
-        self.__finish.set()
+        self.__cycle.terminate()
         self.__cycle.join()
+        self.__listener.terminate()
         self.__listener.join()
 
     def finish(self):
