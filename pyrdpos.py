@@ -21,13 +21,14 @@ class RDPoSConnection(object):
 
             #if random.random() < 0.02:
             #    continue
-
-            print("%02X" % b[0], end=" ")
+            if self.debug:
+                print("%02X" % b[0], end=" ")
             data += b
             if b != serial_datagram.END:
                 continue
-            print()
-            #print("RCVD DGRAM, %i" % len(data))
+            if self.debug:
+                print()
+                #print("RCVD DGRAM, %i" % len(data))
             try:
                 dgram = serial_datagram.decode(data)
                 evq.put(("dgram_recv", dgram))
@@ -36,24 +37,29 @@ class RDPoSConnection(object):
             data = bytes()
 
     def __rdp_connected(self, conn):
-        #print("CONNECTED")
+        if self.debug:
+            print("CONNECTED")
         self.__connected.set()
         self.__closed.clear()
 
     def __rdp_closed(self, conn):
-        #print("CLOSED")
+        if self.debug:
+            print("CLOSED")
         self.__connected.clear()
         self.__closed.set()
 
     def __dgram_send(self, conn, data):
         enc = serial_datagram.encode(data)
-        #print("SEND", end=" ")
-        for b in enc:
-            print("%02X" % b, end=" ")
-        print()
+        if self.debug:
+            print("SEND:", end=" ")
+            for b in enc:
+                print("%02X" % b, end=" ")
+            print()
         self.ser_port.write(enc)
 
     def __data_received(self, conn, data):
+        if self.debug:
+            print("RCV: ", data)
         self.__rcvd.put(data)
 
     def __data_transmitted(self, conn):
@@ -88,10 +94,10 @@ class RDPoSConnection(object):
                 pass
                 #print("Data error")
 
-    def __init__(self, ser_port):
+    def __init__(self, ser_port, debug=False):
         self.evq = multiprocessing.Queue()
         self.ser_port = ser_port
-
+        self.debug = debug
         self.__transmitted = multiprocessing.Event()
         self.__connected = multiprocessing.Event()
         self.__closed = multiprocessing.Event()
@@ -101,6 +107,7 @@ class RDPoSConnection(object):
         self.__cycle = multiprocessing.Process(target=self.run_cycle, args=(self.evq,))
         self.__listener.start()
         self.__cycle.start()
+        
 
     def __dofinish(self):
         self.__cycle.terminate()
@@ -128,7 +135,8 @@ class RDPoSConnection(object):
         return True
 
     def read(self):
-        return self.__rcvd.get()
+        msg = self.__rcvd.get()
+        return msg
 
     def close(self):
         self.evq.put(("close", None))

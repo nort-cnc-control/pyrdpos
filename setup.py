@@ -9,4 +9,5 @@ install_requires = [
     'serial_datagram',
 ]
 
-setup(name = 'RDPoS', version = '1.0', py_modules=['rdpos'])
+setup(name = 'RDPoS', version = '1.0', py_modules=['pyrdpos'])
+
