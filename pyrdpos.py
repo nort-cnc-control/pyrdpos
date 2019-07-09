@@ -2,12 +2,25 @@
 #-*- encoding: utf-8 -*-
 
 import multiprocessing
+import threading
 import rdp
 import serial_datagram
 import time
 import random
 
 class RDPoSConnection(object):
+
+    class TickTimer(threading.Thread):
+        def __init__(self, dt, conn):
+            threading.Thread.__init__(self)
+            self.dts = dt / 1000000.0
+            self.dt = dt
+            self.conn = conn
+        
+        def run(self):
+            while True:
+                time.sleep(self.dts)
+                self.conn.tick(self.dt)
 
     def run_read_serial(self, evq):
         data = bytes()
@@ -67,6 +80,9 @@ class RDPoSConnection(object):
     def run_cycle(self, evq):
         rdpc = rdp.RDP()
         
+        timer = self.TickTimer(1000, rdpc)
+        timer.start()
+
         rdpc.set_dgram_send_cb(self.__dgram_send)
         rdpc.set_data_received_cb(self.__data_received)
         rdpc.set_data_transmitted_cb(self.__data_transmitted)
