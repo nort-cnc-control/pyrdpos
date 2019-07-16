@@ -144,9 +144,17 @@ class RDPoSConnection(object):
     def send(self, data):
         if not self.__connected.is_set():
             return False
+        self.__transmitted.clear()
         self.evq.put(("send", data))
         self.__transmitted.wait()
         self.__transmitted.clear()
+        return True
+
+    def send_nowait(self, data):
+        if not self.__connected.is_set():
+            return False
+        self.__transmitted.clear()
+        self.evq.put(("send", data))
         return True
 
     def read(self):
