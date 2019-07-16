@@ -20,7 +20,7 @@ class RDPoSConnection(object):
         def run(self):
             while True:
                 time.sleep(self.dts)
-                self.conn.tick(self.dt)
+                self.conn.tick(int(self.dt))
 
     def run_read_serial(self, evq):
         data = bytes()
@@ -80,7 +80,7 @@ class RDPoSConnection(object):
     def run_cycle(self, evq):
         rdpc = rdp.RDP()
         
-        timer = self.TickTimer(1000, rdpc)
+        timer = self.TickTimer(1000.0, rdpc)
         timer.start()
 
         rdpc.set_dgram_send_cb(self.__dgram_send)
